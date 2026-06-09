@@ -299,8 +299,11 @@ def get_fundamentals(
             ("Beta", info.get("beta")),
             ("52 Week High", info.get("fiftyTwoWeekHigh")),
             ("52 Week Low", info.get("fiftyTwoWeekLow")),
-            ("50 Day Average", info.get("fiftyDayAverage")),
-            ("200 Day Average", info.get("twoHundredDayAverage")),
+            # Moving averages are deliberately excluded: they are technicals,
+            # and the market analyst already gets authoritative values from
+            # the indicators tool + verified snapshot. Shipping a second,
+            # differently-windowed copy here produced conflicting numbers
+            # across reports.
             ("Revenue (TTM)", info.get("totalRevenue")),
             ("Gross Profit", info.get("grossProfits")),
             ("EBITDA", info.get("ebitda")),
