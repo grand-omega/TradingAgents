@@ -22,7 +22,7 @@ def test_every_select_llm_provider_choice_has_an_entry():
         "qwen", "qwen-cn",
         "glm", "glm-cn",
         "minimax", "minimax-cn",
-        "openrouter", "azure", "ollama",
+        "openrouter", "azure", "ollama", "claude-cli",
     }
     assert expected.issubset(PROVIDER_API_KEY_ENV.keys())
 
@@ -51,6 +51,11 @@ def test_known_providers_resolve(provider, env_var):
 
 def test_ollama_has_no_key():
     assert get_api_key_env("ollama") is None
+
+
+def test_claude_cli_has_no_key():
+    # claude-cli authenticates via Claude Code's own login (subscription OAuth).
+    assert get_api_key_env("claude-cli") is None
 
 
 def test_unknown_provider_returns_none():

@@ -149,6 +149,11 @@ class TradingAgentsGraph:
             if effort:
                 kwargs["effort"] = effort
 
+        elif provider == "claude-cli":
+            effort = self.config.get("claude_cli_effort")
+            if effort:
+                kwargs["effort"] = effort
+
         # Sampling temperature is cross-provider: forward it whenever set.
         # float() here so a value coming from a TRADINGAGENTS_TEMPERATURE env
         # string ("0.2") works the same as a programmatic float.

@@ -41,6 +41,9 @@ PROVIDER_API_KEY_ENV: dict[str, str | None] = {
     # relays), but it is marked key-optional in the provider registry so the CLI
     # never forces a prompt and keyless local servers still work.
     "openai_compatible": "OPENAI_COMPATIBLE_API_KEY",
+    # Claude Code CLI authenticates via its own login (subscription OAuth or
+    # keychain), so the framework requires no API key for this provider.
+    "claude-cli": None,
 }
 
 

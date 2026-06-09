@@ -346,6 +346,7 @@ def _llm_provider_table() -> list[tuple[str, str, str | None]]:
     """
     ollama_url = os.environ.get("OLLAMA_BASE_URL") or "http://localhost:11434/v1"
     return [
+        ("Claude Code CLI (subscription, no API key)", "claude-cli", None),
         ("OpenAI", "openai", "https://api.openai.com/v1"),
         ("Google", "google", None),
         ("Anthropic", "anthropic", "https://api.anthropic.com/"),

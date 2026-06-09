@@ -134,9 +134,36 @@ For local models with Ollama:
 docker compose --profile ollama run --rm tradingagents-ollama
 ```
 
-### Required APIs
+### Claude Code CLI (default — runs on your subscription, no API key)
 
-TradingAgents supports multiple LLM providers. Set the API key for your chosen provider:
+By default TradingAgents uses the **`claude-cli`** provider, which drives the
+[Claude Code](https://docs.claude.com/en/docs/claude-code) CLI (`claude -p`) as a
+subprocess. Every model call runs on your **Claude subscription (Pro/Max OAuth)**
+instead of a per-token API key. Setup:
+
+```bash
+npm install -g @anthropic-ai/claude-code   # or your preferred install method
+claude login                               # authenticate with your subscription
+```
+
+Then just run `tradingagents` — no API key needed. Notes:
+
+- The analysts' data tools are exposed to Claude via a bundled MCP server
+  (`tradingagents.mcp_tools_server`), so the agentic tool-calling loop runs
+  natively inside `claude -p`.
+- Any `ANTHROPIC_API_KEY` in your environment is **intentionally ignored** for
+  this provider (scrubbed from the subprocess) so billing stays on the
+  subscription. To use the Anthropic **API** instead, set
+  `TRADINGAGENTS_LLM_PROVIDER=anthropic` (or pick it in the CLI).
+- Models map to `claude --model` (`opus` / `sonnet` / `haiku` aliases or a full
+  model ID). Tune effort with `TRADINGAGENTS_CLAUDE_CLI_EFFORT`.
+- Trade-offs: each model call spawns a `claude` process, so a full run is
+  noticeably slower than the API and is subject to your plan's rate limits; and
+  the CLI's per-run token/cost stats are not reported for this provider.
+
+### Required APIs (API-key providers)
+
+To use a token-billed API provider instead, set the API key for your chosen provider:
 
 ```bash
 export OPENAI_API_KEY=...          # OpenAI (GPT)
@@ -204,7 +231,7 @@ An interface will appear showing results as they load, letting you track the age
 
 ### Implementation Details
 
-We built TradingAgents with LangGraph to ensure flexibility and modularity. The framework supports multiple LLM providers: OpenAI, Google, Anthropic, xAI, DeepSeek, Qwen (Alibaba DashScope, international and China endpoints), GLM (Zhipu), MiniMax (global + China), OpenRouter, Ollama for local models, and Azure OpenAI for enterprise.
+We built TradingAgents with LangGraph to ensure flexibility and modularity. The framework supports multiple LLM providers: the Claude Code CLI (`claude-cli`, the default, running on your Claude subscription), OpenAI, Google, Anthropic, xAI, DeepSeek, Qwen (Alibaba DashScope, international and China endpoints), GLM (Zhipu), MiniMax (global + China), OpenRouter, Ollama for local models, and Azure OpenAI for enterprise.
 
 ### Python Usage
 
@@ -228,7 +255,7 @@ from tradingagents.graph.trading_graph import TradingAgentsGraph
 from tradingagents.default_config import DEFAULT_CONFIG
 
 config = DEFAULT_CONFIG.copy()
-config["llm_provider"] = "openai"        # e.g. openai, google, anthropic, deepseek, groq, ollama; openai_compatible covers any OpenAI-compatible endpoint (vLLM, LM Studio, llama.cpp, ...)
+config["llm_provider"] = "openai"        # claude-cli (default, subscription), openai, google, anthropic, xai, deepseek, qwen, qwen-cn, glm, glm-cn, minimax, minimax-cn, openrouter, ollama, azure; openai_compatible covers any OpenAI-compatible endpoint (vLLM, LM Studio, llama.cpp, ...)
 config["deep_think_llm"] = "gpt-5.5"     # Model for complex reasoning
 config["quick_think_llm"] = "gpt-5.4-mini" # Model for quick tasks
 config["max_debate_rounds"] = 2
