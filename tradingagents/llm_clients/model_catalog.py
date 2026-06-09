@@ -101,6 +101,23 @@ MODEL_OPTIONS: ProviderModeOptions = {
             ("Claude Sonnet 4.6 - Best speed and intelligence balance", "claude-sonnet-4-6"),
         ],
     },
+    # Claude Code CLI (`claude -p`) — runs on the user's subscription (OAuth)
+    # instead of an API key. Values are passed straight to `claude --model`,
+    # which accepts the rolling aliases (opus/sonnet/haiku) and full model IDs.
+    # Open-ended model naming, so validators.validate_model bypasses this
+    # provider (any model accepted) like ollama/openrouter.
+    "claude-cli": {
+        "quick": [
+            ("Claude Sonnet - balanced (subscription)", "sonnet"),
+            ("Claude Haiku - fastest (subscription)", "haiku"),
+            ("Custom model ID", "custom"),
+        ],
+        "deep": [
+            ("Claude Opus - most capable (subscription)", "opus"),
+            ("Claude Sonnet - balanced (subscription)", "sonnet"),
+            ("Custom model ID", "custom"),
+        ],
+    },
     "google": {
         "quick": [
             ("Gemini 3.5 Flash - Latest, frontier agentic + coding (GA)", "gemini-3.5-flash"),

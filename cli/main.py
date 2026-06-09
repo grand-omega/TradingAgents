@@ -625,6 +625,7 @@ def get_user_selections():
     thinking_level = None
     reasoning_effort = None
     anthropic_effort = None
+    claude_cli_effort = None
 
     provider_lower = selected_llm_provider.lower()
     # When the provider is configured via environment we keep the run fully
@@ -634,6 +635,7 @@ def get_user_selections():
         thinking_level = DEFAULT_CONFIG["google_thinking_level"]
         reasoning_effort = DEFAULT_CONFIG["openai_reasoning_effort"]
         anthropic_effort = DEFAULT_CONFIG["anthropic_effort"]
+        claude_cli_effort = DEFAULT_CONFIG["claude_cli_effort"]
     elif provider_lower == "google":
         console.print(
             create_question_box(
@@ -658,6 +660,14 @@ def get_user_selections():
             )
         )
         anthropic_effort = ask_anthropic_effort()
+    elif provider_lower in ("claude-cli", "claude_code"):
+        console.print(
+            create_question_box(
+                "Step 8: Effort Level",
+                "Configure Claude effort level (runs on your subscription via `claude -p`)"
+            )
+        )
+        claude_cli_effort = ask_anthropic_effort()
 
     return {
         "ticker": selected_ticker,
@@ -672,6 +682,7 @@ def get_user_selections():
         "google_thinking_level": thinking_level,
         "openai_reasoning_effort": reasoning_effort,
         "anthropic_effort": anthropic_effort,
+        "claude_cli_effort": claude_cli_effort,
         "output_language": output_language,
     }
 
@@ -1004,6 +1015,7 @@ def run_analysis(checkpoint: bool = False):
     config["google_thinking_level"] = selections.get("google_thinking_level")
     config["openai_reasoning_effort"] = selections.get("openai_reasoning_effort")
     config["anthropic_effort"] = selections.get("anthropic_effort")
+    config["claude_cli_effort"] = selections.get("claude_cli_effort")
     config["output_language"] = selections.get("output_language", "English")
     config["checkpoint_enabled"] = checkpoint
 

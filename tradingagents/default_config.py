@@ -18,6 +18,8 @@ _ENV_OVERRIDES = {
     "TRADINGAGENTS_CHECKPOINT_ENABLED":   "checkpoint_enabled",
     "TRADINGAGENTS_BENCHMARK_TICKER":     "benchmark_ticker",
     "TRADINGAGENTS_TEMPERATURE":          "temperature",
+    "TRADINGAGENTS_CLAUDE_CLI_EFFORT":    "claude_cli_effort",
+    "TRADINGAGENTS_CLAUDE_CLI_TIMEOUT":   "claude_cli_timeout",
 }
 
 
@@ -52,9 +54,15 @@ DEFAULT_CONFIG = _apply_env_overrides({
     # Pending entries are never pruned. None disables rotation entirely.
     "memory_log_max_entries": None,
     # LLM settings
-    "llm_provider": "openai",
-    "deep_think_llm": "gpt-5.5",
-    "quick_think_llm": "gpt-5.4-mini",
+    # Default to the Claude Code CLI provider ("claude -p"), which runs on the
+    # user's Claude subscription (OAuth) instead of a per-token API key. Requires
+    # the `claude` CLI installed and `claude login`. Switch back to any API
+    # provider (openai, anthropic, google, …) via TRADINGAGENTS_LLM_PROVIDER or
+    # the CLI menu. Model values for claude-cli are passed to `claude --model`
+    # (rolling aliases opus/sonnet/haiku, or a full model ID).
+    "llm_provider": "claude-cli",
+    "deep_think_llm": "opus",
+    "quick_think_llm": "sonnet",
     # When None, each provider's client falls back to its own default endpoint
     # (api.openai.com for OpenAI, generativelanguage.googleapis.com for Gemini, ...).
     # The CLI overrides this per provider when the user picks one. Keeping a
@@ -65,6 +73,11 @@ DEFAULT_CONFIG = _apply_env_overrides({
     "google_thinking_level": None,      # "high", "minimal", etc.
     "openai_reasoning_effort": None,    # "medium", "high", "low"
     "anthropic_effort": None,           # "high", "medium", "low"
+    # Claude Code CLI provider ("claude-cli"): session effort passed to
+    # `claude --effort` (low/medium/high/xhigh/max), and the per-call subprocess
+    # timeout in seconds. Effort None leaves the CLI at its own default.
+    "claude_cli_effort": None,
+    "claude_cli_timeout": 600,
     # Sampling temperature, forwarded to every provider when set. None leaves
     # each provider at its own default. Lower values reduce run-to-run
     # variation on models that honor it; reasoning models largely ignore it
