@@ -46,6 +46,33 @@ def get_language_instruction() -> str:
     return f" Write your entire response in {lang}."
 
 
+def strip_report_preamble(text: Any) -> Any:
+    """Drop process narration the LLM emits before the report proper.
+
+    Despite prompt instructions, models (especially in subprocess tool-loop
+    mode) sometimes preface the report with narration like "All data
+    gathered. Now I'll compile the report." The report body reliably starts
+    at the first markdown heading (or, failing that, a horizontal rule), so
+    cut everything before that marker. Returns the input unchanged when it
+    is not a string or no marker is found past the first line.
+    """
+    if not isinstance(text, str) or not text:
+        return text
+    lines = text.splitlines()
+    start = next(
+        (i for i, line in enumerate(lines) if line.lstrip().startswith("#")),
+        None,
+    )
+    if start is None:
+        start = next(
+            (i for i, line in enumerate(lines) if line.strip() == "---"),
+            None,
+        )
+    if not start:
+        return text
+    return "\n".join(lines[start:])
+
+
 def _clean_identity_value(value: Any) -> Optional[str]:
     """Return a trimmed string, or None for empty / placeholder-ish values."""
     if not isinstance(value, str):
