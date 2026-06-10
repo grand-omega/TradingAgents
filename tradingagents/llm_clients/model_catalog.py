@@ -178,6 +178,22 @@ MODEL_OPTIONS: ProviderModeOptions = {
     # cli.utils.confirm_ollama_endpoint() right after provider selection.
     # "Custom model ID" lets users pick any model they have pulled via
     # `ollama pull` beyond the three suggested defaults.
+    # llama.cpp (llama-server) — a single-model server ignores the request's
+    # ``model`` field entirely, so "default" works for the common case of
+    # `llama-server -m model.gguf`. Servers running multiple models (router
+    # mode / --model-alias) route by name, so "Custom model name" lets users
+    # target a specific one. Open-ended naming, so validators.validate_model
+    # bypasses this provider like ollama/openrouter.
+    "llama-cpp": {
+        "quick": [
+            ("Server's loaded model (single-model llama-server)", "default"),
+            ("Custom model name", "custom"),
+        ],
+        "deep": [
+            ("Server's loaded model (single-model llama-server)", "default"),
+            ("Custom model name", "custom"),
+        ],
+    },
     "ollama": {
         "quick": [
             ("Qwen3:latest (8B)", "qwen3:latest"),

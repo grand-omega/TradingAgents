@@ -28,6 +28,7 @@ from cli.utils import (
     ask_openai_reasoning_effort,
     ask_output_language,
     ask_qwen_region,
+    confirm_llama_cpp_endpoint,
     confirm_ollama_endpoint,
     detect_asset_type,
     ensure_api_key,
@@ -651,10 +652,13 @@ def get_user_selections():
         if selected_llm_provider == "openai_compatible" and not backend_url:
             backend_url = prompt_openai_compatible_url()
 
-        # For Ollama, surface the resolved endpoint (OLLAMA_BASE_URL vs default)
-        # before model selection so it's obvious where we're connecting.
+        # For local runtimes, surface the resolved endpoint (env var vs
+        # default) before model selection so it's obvious where we're
+        # connecting.
         if selected_llm_provider == "ollama":
             confirm_ollama_endpoint(backend_url)
+        elif selected_llm_provider == "llama-cpp":
+            confirm_llama_cpp_endpoint(backend_url)
 
         # Confirm the provider's API key is present; prompt the user to paste
         # one and persist it to .env if it's missing, so the analysis run

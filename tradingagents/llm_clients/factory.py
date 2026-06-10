@@ -1,6 +1,16 @@
 
 from .base_client import BaseLLMClient
 
+# Accepted alternate spellings → canonical provider key. Users configure the
+# provider as a free-form string (TRADINGAGENTS_LLM_PROVIDER), so the common
+# variants of "llama.cpp" are normalised here rather than spread across the
+# per-provider tables in validators/api_key_env/openai_client.
+_PROVIDER_ALIASES = {
+    "llama.cpp": "llama-cpp",
+    "llama_cpp": "llama-cpp",
+    "llamacpp":  "llama-cpp",
+}
+
 
 def create_llm_client(
     provider: str,
@@ -27,6 +37,7 @@ def create_llm_client(
         ValueError: If provider is not supported
     """
     provider_lower = provider.lower()
+    provider_lower = _PROVIDER_ALIASES.get(provider_lower, provider_lower)
 
     # Native (non-OpenAI) APIs are matched first so their string check doesn't
     # import the OpenAI client. Everything else is OpenAI-compatible and routes

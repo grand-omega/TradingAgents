@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Breaking changes within the 0.x line are called out explicitly.
 
+## [Unreleased]
+
+### Added
+
+- **llama.cpp provider for fully local inference.** `llm_provider: "llama-cpp"`
+  talks to a local `llama-server` over its OpenAI-compatible API (default
+  `http://localhost:8080/v1`, overridable via `LLAMA_CPP_BASE_URL`). No API
+  key required; any model name is accepted ("default" targets a single-model
+  server, which ignores the field). Structured outputs use llama.cpp's
+  grammar-backed `json_schema` mode so they work with any loaded model;
+  analyst tool calls require starting the server with `--jinja`. Alternate
+  spellings (`llama.cpp`, `llama_cpp`, `llamacpp`) are normalised in the
+  client factory.
+
 ## [0.3.0] — 2026-06-22
 
 Stabilization and extensibility release: a CI gate, a unified verified

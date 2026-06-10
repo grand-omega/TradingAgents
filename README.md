@@ -185,7 +185,27 @@ For Azure OpenAI, copy `.env.enterprise.example` to `.env.enterprise` and fill i
 
 For AWS Bedrock, install the extra with `pip install ".[bedrock]"`, set `llm_provider: "bedrock"`, configure AWS credentials (environment variables, `~/.aws/credentials`, or an IAM role) and `AWS_DEFAULT_REGION`, and use a Bedrock model ID, e.g. `us.anthropic.claude-opus-4-8-v1:0`.
 
-For local models, configure Ollama with `llm_provider: "ollama"`. The default endpoint is `http://localhost:11434/v1`; set `OLLAMA_BASE_URL` to point at a remote `ollama-serve`. Pull models with `ollama pull <name>`, and pick "Custom model ID" in the CLI for any model not listed by default.
+### Fully local models (no API key, no cloud)
+
+Two local runtimes are supported out of the box; both run the whole pipeline on your machine with no API key:
+
+- **Ollama** — set `llm_provider: "ollama"`. The default endpoint is `http://localhost:11434/v1`; set `OLLAMA_BASE_URL` to point at a remote `ollama-serve`. Pull models with `ollama pull <name>`, and pick "Custom model ID" in the CLI for any model not listed by default.
+- **llama.cpp** — set `llm_provider: "llama-cpp"`. Start your server with tool-call support enabled, e.g. `llama-server -m model.gguf --jinja`, and TradingAgents talks to its OpenAI-compatible API at `http://localhost:8080/v1` (override with `LLAMA_CPP_BASE_URL`). A single-model server ignores the model name, so the default "Server's loaded model" choice just works; multi-model servers can be targeted via "Custom model name".
+
+```bash
+# Example: fully local, non-interactive run with llama.cpp
+llama-server -m qwen3-32b-q4_k_m.gguf --jinja -c 32768 &
+export TRADINGAGENTS_LLM_PROVIDER=llama-cpp
+export TRADINGAGENTS_DEEP_THINK_LLM=default
+export TRADINGAGENTS_QUICK_THINK_LLM=default
+tradingagents
+```
+
+Notes for llama.cpp:
+
+- `--jinja` is required for the analyst agents — they call data tools (price history, indicators, news) through OpenAI-style tool calls, which llama-server only supports with Jinja chat templates. Pick a model whose template supports tool calling (e.g. Qwen 3, Llama 3.x, Mistral).
+- Structured outputs (research plan, trader proposal) use llama.cpp's grammar-backed `json_schema` mode automatically, so they are enforced at the sampler level and work with any model.
+- Market data still comes from the configured vendors (yfinance by default), so the machine needs internet access for data — only the LLM inference is local.
 
 For any other OpenAI-compatible server (vLLM, LM Studio, llama.cpp, or a custom relay), use `llm_provider: "openai_compatible"` and set the endpoint via `backend_url` (or `TRADINGAGENTS_LLM_BACKEND_URL`), e.g. `http://localhost:8000/v1` for vLLM or `http://localhost:1234/v1` for LM Studio. The model is whatever your server serves. No key is needed for local servers; set `OPENAI_COMPATIBLE_API_KEY` when the endpoint requires one.
 
@@ -231,7 +251,7 @@ An interface will appear showing results as they load, letting you track the age
 
 ### Implementation Details
 
-We built TradingAgents with LangGraph to ensure flexibility and modularity. The framework supports multiple LLM providers: the Claude Code CLI (`claude-cli`, the default, running on your Claude subscription), OpenAI, Google, Anthropic, xAI, DeepSeek, Qwen (Alibaba DashScope, international and China endpoints), GLM (Zhipu), MiniMax (global + China), OpenRouter, Ollama for local models, and Azure OpenAI for enterprise.
+We built TradingAgents with LangGraph to ensure flexibility and modularity. The framework supports multiple LLM providers: the Claude Code CLI (`claude-cli`, the default, running on your Claude subscription), OpenAI, Google, Anthropic, xAI, DeepSeek, Qwen (Alibaba DashScope, international and China endpoints), GLM (Zhipu), MiniMax (global + China), OpenRouter, Ollama and llama.cpp for local models, and Azure OpenAI for enterprise.
 
 ### Python Usage
 
@@ -255,7 +275,7 @@ from tradingagents.graph.trading_graph import TradingAgentsGraph
 from tradingagents.default_config import DEFAULT_CONFIG
 
 config = DEFAULT_CONFIG.copy()
-config["llm_provider"] = "openai"        # claude-cli (default, subscription), openai, google, anthropic, xai, deepseek, qwen, qwen-cn, glm, glm-cn, minimax, minimax-cn, openrouter, ollama, azure; openai_compatible covers any OpenAI-compatible endpoint (vLLM, LM Studio, llama.cpp, ...)
+config["llm_provider"] = "openai"        # claude-cli (default, subscription), openai, google, anthropic, xai, deepseek, qwen, qwen-cn, glm, glm-cn, minimax, minimax-cn, openrouter, ollama, llama-cpp, azure; openai_compatible covers any other OpenAI-compatible endpoint (vLLM, LM Studio, ...)
 config["deep_think_llm"] = "gpt-5.5"     # Model for complex reasoning
 config["quick_think_llm"] = "gpt-5.4-mini" # Model for quick tasks
 config["max_debate_rounds"] = 2

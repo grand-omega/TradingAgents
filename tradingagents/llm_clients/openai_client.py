@@ -129,6 +129,28 @@ class DeepSeekChatOpenAI(NormalizedChatOpenAI):
         return chat_result
 
 
+class LlamaCppChatOpenAI(NormalizedChatOpenAI):
+    """llama.cpp-specific overrides on top of the OpenAI-compatible client.
+
+    llama-server compiles ``response_format={"type": "json_schema", ...}``
+    into a GBNF grammar that constrains decoding, so structured output is
+    enforced at the sampler level and works with ANY loaded model — unlike
+    function_calling, which requires the model's chat template to support
+    tool calls (and the server to be started with ``--jinja``). The
+    capability table can't express this because it is keyed by model ID
+    and llama.cpp model names are user-defined, so the provider class
+    overrides the default method instead.
+
+    An explicit ``method=`` from the caller still wins, and plain tool
+    binding for the analyst agents (bind_tools) is unaffected.
+    """
+
+    def with_structured_output(self, schema, *, method=None, **kwargs):
+        return super().with_structured_output(
+            schema, method=method or "json_schema", **kwargs
+        )
+
+
 class MinimaxChatOpenAI(NormalizedChatOpenAI):
     """MiniMax-specific overrides on top of the OpenAI-compatible client.
 
@@ -230,6 +252,10 @@ OPENAI_COMPATIBLE_PROVIDERS: dict[str, ProviderSpec] = {
     "openai_compatible": ProviderSpec(
         require_base_url=True, key_optional=True, chat_class=LocalCompatibleChatOpenAI
     ),
+    # Local runtime: llama-server speaks the OpenAI-compatible API. Endpoint is
+    # overridable via LLAMA_CPP_BASE_URL, mirroring the OLLAMA_BASE_URL convention.
+    "llama-cpp":  ProviderSpec(base_url="http://localhost:8080/v1", base_url_env="LLAMA_CPP_BASE_URL",
+                               key_optional=True, placeholder_key="llama-cpp", chat_class=LlamaCppChatOpenAI),
 }
 
 

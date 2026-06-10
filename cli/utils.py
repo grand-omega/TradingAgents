@@ -340,11 +340,12 @@ def _llm_provider_table() -> list[tuple[str, str, str | None]]:
 
     Shared by the interactive picker and by env-driven configuration so an
     env-set provider resolves to the same default endpoint the menu uses.
-    Ollama users can point at a remote ollama-serve via OLLAMA_BASE_URL
-    (convention from the broader Ollama ecosystem); falls back to the
-    localhost default when unset.
+    Local runtimes can point at a remote server via their env var
+    (OLLAMA_BASE_URL / LLAMA_CPP_BASE_URL, conventions from each ecosystem);
+    they fall back to the localhost default when unset.
     """
     ollama_url = os.environ.get("OLLAMA_BASE_URL") or "http://localhost:11434/v1"
+    llama_cpp_url = os.environ.get("LLAMA_CPP_BASE_URL") or "http://localhost:8080/v1"
     return [
         ("Claude Code CLI (subscription, no API key)", "claude-cli", None),
         ("OpenAI", "openai", "https://api.openai.com/v1"),
@@ -363,7 +364,8 @@ def _llm_provider_table() -> list[tuple[str, str, str | None]]:
         ("Azure OpenAI", "azure", None),
         ("Amazon Bedrock", "bedrock", None),
         ("Ollama", "ollama", ollama_url),
-        ("OpenAI-compatible (vLLM, LM Studio, llama.cpp, custom relay)", "openai_compatible", None),
+        ("llama.cpp (local llama-server, no API key)", "llama-cpp", llama_cpp_url),
+        ("OpenAI-compatible (vLLM, LM Studio, custom relay)", "openai_compatible", None),
     ]
 
 
@@ -571,34 +573,48 @@ def ask_minimax_region() -> tuple[str, str]:
     ).ask()
 
 
-def confirm_ollama_endpoint(url: str) -> None:
-    """Show the resolved Ollama endpoint after provider selection.
+def _confirm_local_endpoint(
+    display_name: str, server_name: str, env_var: str, default_port: int, url: str
+) -> None:
+    """Show the resolved endpoint of a local LLM runtime after selection.
 
     Surfaces three things the user benefits from seeing before model
     selection: which URL we'll actually hit, where it came from
-    (`OLLAMA_BASE_URL` vs default), and a soft warning if the URL is
-    missing the scheme/port that ollama-serve expects. The warning is
-    advisory only — we don't reject malformed input, since the user may
-    be doing something deliberately unusual (e.g. a reverse-proxy path).
+    (env var vs default), and a soft warning if the URL is missing the
+    scheme/port that the server expects. The warning is advisory only —
+    we don't reject malformed input, since the user may be doing
+    something deliberately unusual (e.g. a reverse-proxy path).
     """
-    from_env = os.environ.get("OLLAMA_BASE_URL")
-    origin = " (from OLLAMA_BASE_URL)" if from_env and from_env == url else ""
-    console.print(f"[green]✓ Using Ollama at {url}{origin}[/green]")
+    from_env = os.environ.get(env_var)
+    origin = f" (from {env_var})" if from_env and from_env == url else ""
+    console.print(f"[green]✓ Using {display_name} at {url}{origin}[/green]")
 
     if not url.startswith(("http://", "https://")):
         console.print(
             f"[yellow]Note: {url!r} is missing a scheme. "
-            f"Ollama-serve typically expects a URL like "
-            f"http://<host>:11434/v1.[/yellow]"
+            f"{server_name} typically expects a URL like "
+            f"http://<host>:{default_port}/v1.[/yellow]"
         )
-    elif ":11434" not in url and "://localhost" not in url and "://127.0.0.1" not in url:
-        # Soft hint when the port differs from the ollama-serve default
+    elif f":{default_port}" not in url and "://localhost" not in url and "://127.0.0.1" not in url:
+        # Soft hint when the port differs from the server default
         # and the host isn't local (where users sometimes proxy on :80).
         console.print(
-            f"[yellow]Note: {url!r} doesn't include port 11434. "
-            f"Make sure your remote ollama-serve listens on the port "
+            f"[yellow]Note: {url!r} doesn't include port {default_port}. "
+            f"Make sure your remote {server_name} listens on the port "
             f"shown above.[/yellow]"
         )
+
+
+def confirm_ollama_endpoint(url: str) -> None:
+    """Show the resolved Ollama endpoint after provider selection."""
+    _confirm_local_endpoint("Ollama", "Ollama-serve", "OLLAMA_BASE_URL", 11434, url)
+
+
+def confirm_llama_cpp_endpoint(url: str) -> None:
+    """Show the resolved llama.cpp endpoint after provider selection."""
+    _confirm_local_endpoint(
+        "llama.cpp", "llama-server", "LLAMA_CPP_BASE_URL", 8080, url
+    )
 
 
 def ensure_api_key(provider: str) -> str | None:

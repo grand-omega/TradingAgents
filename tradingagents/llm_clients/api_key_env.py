@@ -37,6 +37,7 @@ PROVIDER_API_KEY_ENV: dict[str, str | None] = {
     "nvidia":     "NVIDIA_API_KEY",
     # Local runtimes do not authenticate.
     "ollama":     None,
+    "llama-cpp":  None,
     # Generic OpenAI-compatible endpoint: the client reads this when set (keyed
     # relays), but it is marked key-optional in the provider registry so the CLI
     # never forces a prompt and keyless local servers still work.
